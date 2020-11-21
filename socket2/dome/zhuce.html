@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>注册</title>
+</head>
+<body>
+    <div id="vue">
+        <form @submit.prevent="onSubmit()">
+            <h3>注册</h3>
+            <div>账号</div>
+            <input type="text" v-model="user.account">
+            <div>密码</div>
+            <input type="text" v-model="user.pwd">
+            <div>中文昵称</div>
+            <input type="text" v-model="user.name">
+            <div>
+                <button type="submit" >随机注册</button>
+            </div>
+        </form>
+        
+        <hr>
+        <form @submit.prevent="登录()">
+            <h3>登录</h3>
+            <div>账号</div>
+            <input type="text" v-model="login_user.account">
+            <div>密码</div>
+            <input type="text" v-model="login_user.pwd" placeholder="密码提示：123456">
+            <div>
+                <button type="submit">登录</button>
+            </div>
+        </form>
+        <hr>
+        <div>
+            <button type="button" @click="认证()">token认证</button>
+        </div>
+        <div>
+            <button type="button" @click="退出()">退出</button>
+        </div>
+        <hr>
+        <h3>共{{userTotal}}个</h3>
+        <table>
+            <thead>
+                <tr>
+                    <td>id</td>
+                    <td>账号</td>
+                    <td>昵称</td>
+                </tr>
+            </thead>
+            <tbody>
+                <tr v-for="(item, index) in userList" :key="index">
+                    <td>{{item.id}}</td>
+                    <td>{{item.account}}</td>
+                    <td>{{item.name}}</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+    <script src="http://mockjs.com/dist/mock.js"></script>
+    <script src="js/vue.js"></script>
+    <script>
+        // MarkLopez
+        // JosephHarris
+
+        // window.atob
+        
+        
+        var url = 'http://10.10.27.150:81';
+        new Vue({
+            el:"#vue",
+            data() {
+                return {
+                    user:{
+                        account:Mock.mock('@name').replace(/ /g,''),
+                        pwd:"123456",
+                        name:Mock.mock('@cname')
+                    },
+                    login_user:{
+                        account:"",
+                        pwd:""
+                    },
+                    userList:[],
+                    userTotal:0
+                }
+            },
+            methods: {
+                onSubmit(){
+                    axios.post(`${url}/socketIo/public/user/zhuce`,this.user).then(x=>{
+                        console.log(x)
+                        if(x.data.code==1){
+                            alert('注册成功')
+                            if(x.data.token){
+                                localStorage.token = x.data.token
+                            }
+                        }else if(x.data.message){
+                            alert(x.data.message)
+                        }else{
+                            alert('未知错误')
+                        }
+                    }).catch(err=>{
+                        alert('系统错误')
+                    })
+                },
+                登录(){
+                    axios.post(`${url}/socketIo/public/user/login`,this.login_user).then(x=>{
+                        if(x.data.code==1){
+                            alert('登录成功')
+                            if(x.data.token){
+                                localStorage.token = x.data.token;
+                            }
+                        }else if(x.data.message){
+                            alert(x.data.message)
+                        }else{
+                            alert('未知错误')
+                        }
+                    }).catch(err=>{
+                        alert('系统错误')
+                    })
+                },
+                认证(){
+                    let token = localStorage.token
+                    axios.post(`${url}/socketIo/public/user/renzheng`,'',{headers:{Authorization:`bearer ${token}`}}).then(x=>{
+                        console.log(x);
+                    }).catch(err=>{
+                        console.log(err);
+                    })
+                    
+                    // axios.post(`${url}/socketIo/public/user/renzheng`,'',{headers:{Authorization:`bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjIiLCJqdGkiOiI0MmI2ZTNmYTU2YjJmYTRmOTJjY2U1ZjNhNzQwZjRlNyIsImlhdCI6MTU4MDM3Mjg4NCwiZXhwIjoxNTgwNDU5Mjg0fQ.d_Pu26OQNMIlx44d7kwvHPXpAcfZoC_4ukvxKisMMkw`}}).then(x=>{
+                    //     console.log(x);
+                    // }).catch(err=>{
+                    //     console.log(err);
+                    // })
+                },
+                查询用户列表(){
+                    axios.post(`${url}/socketIo/public/user/getUserList`,{pageIndex:1}).then(x=>{
+                        console.log(x);
+                        this.userList=x.data.data;
+                        this.userTotal = x.data.total;
+                    }).catch(err=>{
+                        console.log(err);
+                    })
+                },
+                退出(){
+                    localStorage.removeItem('token')
+                }
+            },
+            mounted() {
+                this.查询用户列表()
+            },
+        })
+    </script>
+</body>
+</html>

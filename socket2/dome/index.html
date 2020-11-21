@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+</head>
+<body>
+    <div id="vue">
+        <h4>程序员能有什么压力，复制粘贴就能跑</h4>
+        socket.io 测试
+        <div>
+            <a href="zhuce.html">注册登录</a>
+        </div>
+        <div>
+            <button @click='gb()'>出发广播事件</button>
+        </div>
+        <div>
+            房间名
+            <input type="text" v-model="roomeName">
+        </div>
+        <div>
+            用户名
+            <input type="text" v-model="userName">
+        </div>
+        <div>
+            <button @click="进入房间()">进入房间</button>
+        </div>
+        <hr>
+        <h4>人数</h4>
+        <ul>
+            <li v-for="(item, index) in 人员列表" :key="index">{{item.u2.name}}</li>
+        </ul>
+        <ul>
+            <li v-for="(item, index) in msg" :key="index">{{item}}</li>
+        </ul>
+    </div>
+
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+    <script src="js/vue.js"></script>
+    <script src="http://mockjs.com/dist/mock.js"></script>
+    <script src="js/socket.io.js"></script>
+    <script>
+        var url = 'http://10.10.27.150:81';
+        var socket = io.connect(`http://localhost:3000`);
+            
+            socket.on('sys',function(data){
+                console.log(data)
+                v.msg.push(data)
+            })
+
+            socket.on('接收广播',function(data){
+                v.msg.push(data)
+            })
+
+            socket.on('msg',function(data){
+                console.log(data);
+                if(data.type==0){
+                    v.人员列表=data.msg
+                }
+            })
+
+        var v = new Vue({
+            el:"#vue",
+            data:{
+                人员列表:[],
+                roomeName:"0",
+                // userName:Mock.mock('@cname'),
+                userName:'游客',
+                msg:[]
+            },
+            methods: {
+                gb(){
+                    socket.emit('触发广播',(data)=>{
+                        console.log(data)//应该是 'tobi says woot'
+                    })
+                },
+                进入房间(){
+                    var obj = {
+                            roomeName:this.roomeName,
+                            userName:this.userName,
+                            token:localStorage.token ? localStorage.token : ''
+                        }
+                    socket.emit('join', obj);
+                    // socket.emit('进入房间',this.roomeName)
+                },
+                是否登录(){
+                    let token = localStorage.token
+                    axios.post(`${url}/socketIo/public/user/getUser`,'',{headers:{Authorization:`bearer ${token}`}}).then(x=>{
+                        // console.log(x);
+                        if(x.data.code==1){
+                            this.userName = x.data.user.name;
+                        }
+                    }).catch(err=>{
+                        console.log(err);
+                    })
+                }
+            },
+            mounted() {
+                this.是否登录()
+            },
+        })
+    </script>
+</body>
+</html>

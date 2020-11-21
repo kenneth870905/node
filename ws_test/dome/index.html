@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <script language="JavaScript" src="http://code.jquery.com/jquery-1.11.0.js"></script>
+</head>
+
+<body>
+    
+    <div id="vue">
+        <div id="show"></div>
+        <div>
+            <input type="text" v-model="name">
+        </div>
+        <div>
+            <input id="message" type="text" style="width: 200px">
+            <button type="button" id="send" @click="sendMessage();">
+                Send!
+            </button>
+            <button type="button" id="send" @click="exit();">
+                exit
+            </button>
+        </div>
+    </div>
+    <script src="js/vue.js"></script>
+    <script>
+
+        var ws = new WebSocket('ws://localhost:3000');
+        new Vue({
+            el:"#vue",
+            data(){
+                return {
+                    // name:"山上的大王"+new Date()
+                    name:"山上的大王"+Math.floor(Math.random()*(10-0+1)+0)
+                }
+            },
+            methods: {
+                sendMessage(){
+                    var msg = $('#message').val();
+                    var s = { msg: msg, name: this.name };
+                    ws.send(JSON.stringify(s));
+                    this.chang();
+                },
+                chang(){
+                    $('#message').val("");
+                },
+                exit(){
+                    ws.close();
+                }
+            },
+            mounted() {
+                var this2 = this;
+                
+                ws.onopen = function (e) {
+                    console.log('Connection to server opened' + ws.readyState);
+                    $('#show').html("连接状态：" + ws.readyState + "</br>")
+                }
+                ws.onmessage = function (evt) {
+                    $("#show").append(evt.data + "</br>");
+                }
+                ws.onclose = function (evt) {
+                    console.log("WebSocketClosed!");
+                    console.log(evt);
+                };
+            },
+        })
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+</head>
+<body>
+    <div id="vue">
+        socket.io 测试
+        <div>
+            <button @click='gb()'>出发广播事件</button>
+        </div>
+        <div>
+            <button @click="查看自己信息()">自己信息</button>
+        </div>
+        <div>
+            房间名
+            <input type="text" v-model="roomeName">
+        </div>
+        <div>
+            用户名
+            <input type="text" v-model="userName">
+        </div>
+        <div>
+            <button @click="进入房间()">进入房间</button>
+        </div>
+        <ul>
+            <li v-for="(item, index) in msg" :key="index">{{item}}</li>
+        </ul>
+    </div>
+    
+    <script src="/js/vue.js"></script>
+    <script src="http://mockjs.com/dist/mock.js"></script>
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        var socket = io.connect('http://localhost:3000');
+            
+            socket.on('sys',function(data){
+                console.log(data)
+                v.msg.push(data)
+            })
+
+            socket.on('接收广播',function(data){
+                v.msg.push(data)
+            })
+
+        var v = new Vue({
+            el:"#vue",
+            data:{
+                roomeName:"0",
+                userName:Mock.mock('@cname'),
+                msg:[]
+            },
+            methods: {
+                gb(){
+                    socket.emit('触发广播',(data)=>{
+                        console.log(data)//应该是 'tobi says woot'
+                    })
+                },
+                查看自己信息(){
+                    socket.emit('getsocket',(data)=>{
+                        console.log('查看自己信息',data)//应该是 'tobi says woot'
+                    })
+                },
+                进入房间(){
+                    var obj = {
+                            roomeName:this.roomeName,
+                            userName:this.userName
+                        }
+                    socket.emit('join', obj);
+                    // socket.emit('进入房间',this.roomeName)
+                }
+            },
+        })
+    </script>
+</body>
+</html>
